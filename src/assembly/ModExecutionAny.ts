@@ -1,9 +1,10 @@
-import { System, Storage } from "@koinos/sdk-as";
+import { System, Storage, authority } from "@koinos/sdk-as";
 import { modexecutionany } from "./proto/modexecutionany";
 import { ModExecution, modexecution } from "@veive/mod-execution-as";
 import { MODULE_EXECUTION_SPACE_ID } from "@veive/account-as";
 
 const CONFIG_SPACE_ID = 1;
+const ACCOUNT_SPACE_ID = 2;
 
 export class ModExecutionAny extends ModExecution {
 
@@ -19,6 +20,15 @@ export class ModExecutionAny extends ModExecution {
       modexecutionany.config_storage.encode,
       () => new modexecutionany.config_storage()
     );
+
+  account_id: Storage.Obj<modexecutionany.account_id> =
+  new Storage.Obj(
+    this.contractId,
+    ACCOUNT_SPACE_ID,
+    modexecutionany.account_id.decode,
+    modexecutionany.account_id.encode,
+    () => new modexecutionany.account_id()
+  );
 
   /**
    * @external
@@ -43,9 +53,7 @@ export class ModExecutionAny extends ModExecution {
     System.log("[mod-execution-any] execute called");
 
     // check if operation entry_point is in skip list
-    if (
-      this.config_storage.get()!.skip_entry_points.includes(args.operation!.entry_point)
-    ) {
+    if (this.config_storage.get()!.skip_entry_points.includes(args.operation!.entry_point)) {
       System.log(`[mod-execution-any] skip ${args.operation!.entry_point.toString()}`);
 
     } else {
@@ -56,7 +64,7 @@ export class ModExecutionAny extends ModExecution {
       if (args.operation!.args && args.operation!.args!.length > 0) {
         call_args = args.operation!.args!;
       }
-  
+
       System.call(
         args.operation!.contract_id!,
         args.operation!.entry_point,
@@ -70,6 +78,9 @@ export class ModExecutionAny extends ModExecution {
    * @external
    */
   add_skip_entry_point(args: modexecutionany.add_skip_entry_point_args): void {
+    const is_authorized = System.checkAuthority(authority.authorization_type.contract_call, this.account_id.get()!.value!);
+    System.require(is_authorized, "not authorized by the account");
+
     const config = this.config_storage.get() || new modexecutionany.config_storage();
 
     // Check for duplicates
@@ -90,6 +101,9 @@ export class ModExecutionAny extends ModExecution {
    * @external
    */
   remove_skip_entry_point(args: modexecutionany.remove_skip_entry_point_args): void {
+    const is_authorized = System.checkAuthority(authority.authorization_type.contract_call, this.account_id.get()!.value!);
+    System.require(is_authorized, "not authorized by the account");
+
     const config = this.config_storage.get();
     System.require(config != null, "Configuration not found");
 
@@ -114,5 +128,25 @@ export class ModExecutionAny extends ModExecution {
     const config = this.config_storage.get();
     System.require(config != null, "Configuration not found");
     return new modexecutionany.get_skip_entry_points_result(config!.skip_entry_points);
+  }
+
+  /**
+  * @external
+  */
+  on_install(args: modexecution.on_install_args): void {
+    const account = new modexecutionany.account_id();
+    account.value = System.getCaller().caller;
+    this.account_id.put(account);
+    System.log('[mod-execution-any] called on_install');
+  }
+
+  /**
+   * Get associated account_id
+   * 
+   * @external
+   * @readonly
+   */
+  get_account_id(): modexecutionany.account_id {
+    return this.account_id.get()!;
   }
 }

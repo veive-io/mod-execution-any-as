@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package modexecutionany;
 
-//import "koinos/options.proto";
+import "koinos/options.proto";
 
 message config_storage {
     repeated uint32 skip_entry_points = 1;
@@ -18,4 +18,8 @@ message remove_skip_entry_point_args {
 
 message get_skip_entry_points_result {
   repeated uint32 value = 1;
+}
+
+message account_id {
+  bytes value = 1 [(koinos.btype) = ADDRESS];
 }

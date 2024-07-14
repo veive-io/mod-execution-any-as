@@ -91,7 +91,7 @@ it("install module", async () => {
     await tx.wait();
 
     expect(receipt).toBeDefined();
-    expect(receipt.logs).toContain("[mod-execution] called module install");
+    expect(receipt.logs).toContain("[mod-execution-any] called on_install");
 
     const { result } = await accountContract["get_modules"]();
     expect(result.value[0]).toStrictEqual(modSign.address);
@@ -141,8 +141,11 @@ it("add skip entry_point", async () => {
 
     expect(receipt).toBeDefined();
 
-    const { result } = await modContract['get_skip_entry_points']();
-    expect(result.value).toStrictEqual([test.call_contract.entry_point]);
+    const { result: r1 } = await modContract['get_skip_entry_points']();
+    expect(r1.value).toStrictEqual([test.call_contract.entry_point]);
+
+    const { result: r2 } = await modContract['get_account_id']();
+    expect(r2.value).toStrictEqual(accountSign.address);
 });
 
 it("operation skipped", async () => {
