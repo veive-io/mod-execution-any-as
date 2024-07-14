@@ -1,15 +1,17 @@
-# Veive SCA Execution Module
+# Veive SCA Module Execution Any
 
-This package provides the interface and protobuf definitions to be used for developing execution modules that add functionality to the Veive smart account on the Koinos blockchain. It is inspired by the ERC-7579 standard.
+The `ModExecutionAny` class is a versatile execution module designed for the Koinos blockchain. It enables the execution of any operation, with the ability to configure specific entry points to be skipped. This class extends the `ModExecution` module from the Veive protocol, allowing for flexible and controlled execution of various operations.
 
-ERC-7579 defines a standard interface for modular smart accounts. In this context, a module represents a pluggable unit that adds specific functionality to a smart account. Execution modules specifically handle tasks such as the execution logic, making smart accounts more flexible and extensible. This allows developers to create custom execution modules that can be easily integrated into the Veive smart account system on the Koinos blockchain.
+## Overview
+
+The `ModExecutionAny` module provides the functionality to execute any operation while allowing the configuration of specific entry points to be skipped. This is useful in scenarios where certain operations should not be executed by this module. The module saves the `account_id` of the account it is installed on, enabling permission checks for configuring the skip list.
 
 ## Installation
 
 To install the package, use npm or yarn:
 
 ```bash
-npm install @veive/mod-execution
+npm install @veive/mod-execution-any
 ```
 
 ## Usage
@@ -19,36 +21,30 @@ npm install @veive/mod-execution
 First, import the necessary components from the package:
 
 ```typescript
-import { modexecution, Modexecution, IModexecution } from '@veive/mod-execution';
+import { ModExecutionAny } from '@veive/mod-execution-any';
 ```
 
-### Example Implementation
+## Interface and Methods
 
-Create an execution module by extending `Modexecution`:
+The `ModExecutionAny` class provides several methods for managing the execution of operations and configuring skip entry points. Below is a brief overview of the key methods:
 
-```typescript
-import { Modexecution } from '@veive/mod-execution';
+### `execute`
+Executes the specified operation. This method is called to perform a specific operation, which may include smart contract calls or other actions defined in the execution module.
 
-class MyExecutionModule extends Modexecution {
-  // Your implementation here
-}
-```
+### `add_skip_entry_point`
+Adds an entry point to the skip list. This method ensures that the specified entry point is skipped during execution.
 
-## Interface
+### `remove_skip_entry_point`
+Removes an entry point from the skip list. This method ensures that the specified entry point is no longer skipped during execution.
 
-ModExecution class includes methods for executing specific operations, allowing the addition 
-of executable functionality to smart accounts in a modular fashion.
+### `get_skip_entry_points`
+Reads the list of skip entry points. This method returns the list of entry points that are configured to be skipped.
 
-The class is designed to be used within a modular smart account system, enabling 
-pluggable execution logic that can be easily extended or modified.
+### `on_install`
+Overrides the `on_install` method to save the `account_id` of the account on which the module is installed. This allows for permission checks when configuring the skip list.
 
-Key Methods:
-- `execute`: Executes the specified operation, which may include smart contract calls 
-             or other actions defined in the execution module.
-
-The `execute` method can be called by authorized modules to perform specific operations 
-necessary for the functionality of the smart account system.
-
+### `get_account_id`
+Retrieves the associated `account_id`. This method returns the `account_id` of the account on which the module is installed.
 
 ## Scripts
 
@@ -60,12 +56,20 @@ To compile the package, run:
 yarn build
 ```
 
-### Release
+### Test
 
-To create a release, run:
+To run the tests, run:
 
 ```bash
-yarn release
+yarn jest
+```
+
+### Dist
+
+To create a distribution, run:
+
+```bash
+yarn dist
 ```
 
 ## Contributing
