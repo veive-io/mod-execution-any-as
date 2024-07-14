@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package modexecutionany;
 
-import "koinos/options.proto";
+//import "koinos/options.proto";
 
 message config_storage {
     repeated uint32 skip_entry_points = 1;

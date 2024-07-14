@@ -19,6 +19,12 @@ const modSign = new Signer({
     provider
 });
 
+const modContract = new Contract({
+    id: modSign.getAddress(),
+    abi: modAbi,
+    provider
+}).functions;
+
 const accountSign = new Signer({
     privateKey: randomBytes(32).toString("hex"),
     provider
@@ -38,7 +44,7 @@ beforeAll(async () => {
     // deploy mod contract
     await localKoinos.deployContract(
         modSign.getPrivateKey("wif"),
-        path.join(__dirname, "../build/release/ModExecution.wasm"),
+        path.join(__dirname, "../build/release/ModExecutionAny.wasm"),
         modAbi
     );
 
@@ -61,30 +67,9 @@ afterAll(() => {
     localKoinos.stopNode();
 });
 
-it("install error: caller must be itself", async () => {
-    const { operation: install_module } = await accountContract["install_module"]({
-        contract_id: modSign.address
-    }, { onlyOperation: true });
-
-    const tx = new Transaction({
-        signer: accountSign,
-        provider
-    });
-
-    await tx.pushOperation(install_module);
-
-    let error = undefined;
-    try {
-        await tx.send();
-    } catch (e) {
-        error = e;
-    }
-
-    expect(error).toBeDefined();
-});
-
 it("install module", async () => {
     const { operation: install_module } = await accountContract["install_module"]({
+        module_type_id: 1,
         contract_id: modSign.address
     }, { onlyOperation: true });
 
@@ -106,7 +91,7 @@ it("install module", async () => {
     await tx.wait();
 
     expect(receipt).toBeDefined();
-    expect(receipt.logs).toContain("[mod] called module install");
+    expect(receipt.logs).toContain("[mod-execution] called module install");
 
     const { result } = await accountContract["get_modules"]();
     expect(result.value[0]).toStrictEqual(modSign.address);
@@ -132,11 +117,60 @@ it("trigger module", async () => {
     await tx.wait();
     
     expect(receipt).toBeDefined();
-    expect(receipt.logs).toContain("[mod-execution] execute called");
+    expect(receipt.logs).toContain("[mod-execution-any] execute called");
+    expect(receipt.logs).toContain(`[mod-execution-any] calling ${test.call_contract.entry_point}`);
+});
+
+it("add skip entry_point", async () => {
+    // prepare operation to obtain entry_point
+    const { operation: test } = await accountContract["test"]({}, { onlyOperation: true });
+
+    // set skip entry point
+    const { operation: set_config } = await modContract['add_skip_entry_point']({
+        entry_point: test.call_contract.entry_point
+    }, { onlyOperation: true });
+
+    const tx = new Transaction({
+        signer: accountSign,
+        provider,
+    });
+
+    await tx.pushOperation(set_config);
+    const receipt = await tx.send();
+    await tx.wait();
+
+    expect(receipt).toBeDefined();
+
+    const { result } = await modContract['get_skip_entry_points']();
+    expect(result.value).toStrictEqual([test.call_contract.entry_point]);
+});
+
+it("operation skipped", async () => {
+    const { operation: test } = await accountContract["test"]({}, { onlyOperation: true });
+
+    const tx = new Transaction({
+        signer: accountSign,
+        provider
+    });
+
+    const { operation: exec } = await accountContract["execute"]({
+        operation: {
+            contract_id: test.call_contract.contract_id,
+            entry_point: test.call_contract.entry_point
+        }
+    }, { onlyOperation: true });
+
+    await tx.pushOperation(exec);
+    const receipt = await tx.send();
+    await tx.wait();
+
+    expect(receipt).toBeDefined();
+    expect(receipt.logs).toContain(`[mod-execution-any] skip ${test.call_contract.entry_point}`);
 });
 
 it("uninstall module", async () => {
     const { operation: uninstall_module } = await accountContract["uninstall_module"]({
+        module_type_id: 1,
         contract_id: modSign.address
     }, { onlyOperation: true });
 
@@ -158,7 +192,7 @@ it("uninstall module", async () => {
     await tx.wait();
 
     expect(receipt).toBeDefined();
-    expect(receipt.logs).toContain("[mod] called module uninstall");
+    expect(receipt.logs).toContain("[mod-execution] called module uninstall");
 
     const { result } = await accountContract["get_modules"]();
     expect(result).toBeUndefined();

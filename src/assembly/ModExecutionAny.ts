@@ -41,6 +41,28 @@ export class ModExecutionAny extends ModExecution {
    */
   execute(args: modexecution.execute_args): void {
     System.log("[mod-execution-any] execute called");
+
+    // check if operation entry_point is in skip list
+    if (
+      this.config_storage.get()!.skip_entry_points.includes(args.operation!.entry_point)
+    ) {
+      System.log(`[mod-execution-any] skip ${args.operation!.entry_point.toString()}`);
+
+    } else {
+
+      System.log(`[mod-execution-any] calling ${args.operation!.entry_point.toString()}`);
+
+      let call_args = new Uint8Array(0);
+      if (args.operation!.args && args.operation!.args!.length > 0) {
+        call_args = args.operation!.args!;
+      }
+  
+      System.call(
+        args.operation!.contract_id!,
+        args.operation!.entry_point,
+        call_args
+      );
+    }
   }
 
   /**
