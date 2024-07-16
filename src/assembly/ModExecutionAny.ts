@@ -36,13 +36,13 @@ export class ModExecutionAny extends ModExecution {
     );
 
   account_id: Storage.Obj<modexecutionany.account_id> =
-  new Storage.Obj(
-    this.contractId,
-    ACCOUNT_SPACE_ID,
-    modexecutionany.account_id.decode,
-    modexecutionany.account_id.encode,
-    () => new modexecutionany.account_id()
-  );
+    new Storage.Obj(
+      this.contractId,
+      ACCOUNT_SPACE_ID,
+      modexecutionany.account_id.decode,
+      modexecutionany.account_id.encode,
+      () => new modexecutionany.account_id()
+    );
 
   /**
    * @external
@@ -92,7 +92,7 @@ export class ModExecutionAny extends ModExecution {
    * @external
    */
   add_skip_entry_point(args: modexecutionany.add_skip_entry_point_args): void {
-    const is_authorized = System.checkAuthority(authority.authorization_type.contract_call, this.account_id.get()!.value!);
+    const is_authorized = System.checkAuthority(authority.authorization_type.contract_call, this._get_account_id());
     System.require(is_authorized, "not authorized by the account");
 
     const config = this.config_storage.get() || new modexecutionany.config_storage();
@@ -115,7 +115,7 @@ export class ModExecutionAny extends ModExecution {
    * @external
    */
   remove_skip_entry_point(args: modexecutionany.remove_skip_entry_point_args): void {
-    const is_authorized = System.checkAuthority(authority.authorization_type.contract_call, this.account_id.get()!.value!);
+    const is_authorized = System.checkAuthority(authority.authorization_type.contract_call, this._get_account_id());
     System.require(is_authorized, "not authorized by the account");
 
     const config = this.config_storage.get();
@@ -163,4 +163,12 @@ export class ModExecutionAny extends ModExecution {
   get_account_id(): modexecutionany.account_id {
     return this.account_id.get()!;
   }
+
+  /**
+   * return account id
+   */
+  _get_account_id(): Uint8Array {
+    return this.account_id.get()!.value!;
+  }
+
 }
