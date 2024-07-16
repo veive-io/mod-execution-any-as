@@ -60,7 +60,8 @@
     "precompile": "koinos-precompiler-as src",
     "build": "yarn precompile && yarn asbuild",
     "dist": "ts-node scripts/dist.ts",
-    "lint": "eslint --max-warnings 0 --ext ts \"*/assembly/**/*.ts\""
+    "lint": "eslint --max-warnings 0 --ext ts \"*/assembly/**/*.ts\"",
+    "prepublishOnly": "yarn build && yarn dist"
   },
   "config": {
     "protocVersion": "25.2"
