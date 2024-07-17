@@ -69,7 +69,7 @@ afterAll(() => {
 
 it("install module", async () => {
     const { operation: install_module } = await accountContract["install_module"]({
-        module_type_id: 1,
+        module_type_id: 2,
         contract_id: modSign.address
     }, { onlyOperation: true });
 
@@ -173,7 +173,7 @@ it("operation skipped", async () => {
 
 it("uninstall module", async () => {
     const { operation: uninstall_module } = await accountContract["uninstall_module"]({
-        module_type_id: 1,
+        module_type_id: 2,
         contract_id: modSign.address
     }, { onlyOperation: true });
 
