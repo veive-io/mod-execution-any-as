@@ -1,5 +1,5 @@
 import { LocalKoinos } from "@roamin/local-koinos";
-import { Contract, Signer, Transaction, Provider } from "koilib";
+import { Contract, Signer, Transaction, Provider, utils } from "koilib";
 import path from "path";
 import { randomBytes } from "crypto";
 import { beforeAll, afterAll, it, expect } from "@jest/globals";
@@ -19,11 +19,14 @@ const modSign = new Signer({
     provider
 });
 
-const modContract = new Contract({
+const mod = new Contract({
     id: modSign.getAddress(),
     abi: modAbi,
     provider
-}).functions;
+});
+
+const modContract = mod.functions;
+const modSerializer = mod.serializer;
 
 const accountSign = new Signer({
     privateKey: randomBytes(32).toString("hex"),
@@ -67,10 +70,17 @@ afterAll(() => {
     localKoinos.stopNode();
 });
 
-it("install module", async () => {
+it("install module in scope default", async () => {
+    const scope = await modSerializer.serialize({
+        entry_point: 1
+    }, "scope");
+
     const { operation: install_module } = await accountContract["install_module"]({
         module_type_id: 2,
-        contract_id: modSign.address
+        contract_id: modSign.address,
+        scopes: [
+            utils.encodeBase64url(scope)
+        ]
     }, { onlyOperation: true });
 
     const tx = new Transaction({
@@ -94,7 +104,7 @@ it("install module", async () => {
     expect(receipt.logs).toContain("[mod-execution-any] called on_install");
 
     const { result } = await accountContract["get_modules"]();
-    expect(result.value[0]).toStrictEqual(modSign.address);
+    expect(result.value).toStrictEqual([modSign.address]);
 });
 
 it("trigger module", async () => {
@@ -115,19 +125,46 @@ it("trigger module", async () => {
     await tx.pushOperation(exec);
     const receipt = await tx.send();
     await tx.wait();
-    
+
     expect(receipt).toBeDefined();
     expect(receipt.logs).toContain("[mod-execution-any] execute called");
     expect(receipt.logs).toContain(`[mod-execution-any] calling ${test.call_contract.entry_point}`);
 });
 
-it("add skip entry_point", async () => {
-    // prepare operation to obtain entry_point
-    const { operation: test } = await accountContract["test"]({}, { onlyOperation: true });
+it("reinstall module in scope (entry_point=transfer)", async () => {
+    // uninstall module
+    const { operation: uninstall_module } = await accountContract["uninstall_module"]({
+        module_type_id: 2,
+        contract_id: modSign.address
+    }, { onlyOperation: true });
 
-    // set skip entry point
-    const { operation: set_config } = await modContract['add_skip_entry_point']({
-        entry_point: test.call_contract.entry_point
+    const { operation: exec_uninstall_module } = await accountContract["execute_user"]({
+        operation: {
+            contract_id: uninstall_module.call_contract.contract_id,
+            entry_point: uninstall_module.call_contract.entry_point,
+            args: uninstall_module.call_contract.args
+        }
+    }, { onlyOperation: true });
+
+    // install module in a new scope
+    const scope = await modSerializer.serialize({
+        entry_point: 1234
+    }, "scope");
+
+    const { operation: install_module } = await accountContract["install_module"]({
+        module_type_id: 2,
+        contract_id: modSign.address,
+        scopes: [
+            utils.encodeBase64url(scope)
+        ]
+    }, { onlyOperation: true });
+
+    const { operation: exec_install_module } = await accountContract["execute_user"]({
+        operation: {
+            contract_id: install_module.call_contract.contract_id,
+            entry_point: install_module.call_contract.entry_point,
+            args: install_module.call_contract.args
+        }
     }, { onlyOperation: true });
 
     const tx = new Transaction({
@@ -135,17 +172,12 @@ it("add skip entry_point", async () => {
         provider,
     });
 
-    await tx.pushOperation(set_config);
+    await tx.pushOperation(exec_uninstall_module);
+    await tx.pushOperation(exec_install_module);
     const receipt = await tx.send();
     await tx.wait();
 
     expect(receipt).toBeDefined();
-
-    const { result: r1 } = await modContract['get_skip_entry_points']();
-    expect(r1.value).toStrictEqual([test.call_contract.entry_point]);
-
-    const { result: r2 } = await modContract['get_account_id']();
-    expect(r2.value).toStrictEqual(accountSign.address);
 });
 
 it("operation skipped", async () => {
@@ -164,11 +196,18 @@ it("operation skipped", async () => {
     }, { onlyOperation: true });
 
     await tx.pushOperation(exec);
-    const receipt = await tx.send();
-    await tx.wait();
 
-    expect(receipt).toBeDefined();
-    expect(receipt.logs).toContain(`[mod-execution-any] skip ${test.call_contract.entry_point}`);
+    let error = undefined;
+
+    try {
+        await tx.send();
+        await tx.wait();
+    } catch (e) {
+        error = e.message;
+    }
+
+    expect(error).toBeDefined();
+    expect(error).toContain('[account] no execution found');
 });
 
 it("uninstall module", async () => {
