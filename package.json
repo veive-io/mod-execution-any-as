@@ -1,6 +1,6 @@
 {
   "name": "@veive/mod-execution-any-as",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Veive smart account execution module for any operation",
   "author": {
     "name": "veive",
