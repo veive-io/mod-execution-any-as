@@ -42,6 +42,9 @@ export class ModExecutionAny extends ModExecution {
     result.name = "Module execution any";
     result.description = "Execute any operation with this module";
     result.type_id = MODULE_EXECUTION_TYPE_ID;
+    result.scopes = [
+      new modexecution.scope(1)
+    ];
     return result;
   }
 
