@@ -4,20 +4,6 @@ import { ModExecution, modexecution, MODULE_EXECUTION_TYPE_ID } from "@veive/mod
 
 const ACCOUNT_SPACE_ID = 2;
 
-/**
- * The `ModExecutionAny` class is a versatile execution module designed for the Koinos blockchain. 
- * It extends the `ModExecution` module from the Veive protocol, providing the functionality to execute 
- * any operation while allowing configuration of specific entry points to be skipped.
- * 
- * This class supports the following key features:
- * 
- * - **Execution of Any Operation**: Allows the execution of any specified operation, which may include smart contract calls or other actions.
- * - **Configurable Skip Entry Points**: Enables the configuration of entry points to be skipped during execution. This is useful for excluding certain operations from being executed by this module.
- * - **Permission Checks**: Uses the `account_id` of the account on which the module is installed to ensure that only authorized accounts can modify the skip list.
- * - **Storage Management**: Utilizes storage objects to maintain configuration and account information, ensuring data persistence and retrieval.
- * 
- * The `ModExecutionAny` class overrides the `on_install` method to save the `account_id` of the account it is installed on. This allows for proper permission checks when configuring the skip list, ensuring that only authorized accounts can make modifications.
- */
 export class ModExecutionAny extends ModExecution {
 
   callArgs: System.getArgumentsReturn | null;

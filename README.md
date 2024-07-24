@@ -1,54 +1,64 @@
-# Veive SCA Module Execution Any
+## **Mod Execution Any**
 
-The `ModExecutionAny` class is a versatile execution module designed for the Koinos blockchain. It enables the execution of any operation, with the ability to configure specific entry points to be skipped. This class extends the `ModExecution` module from the Veive protocol, allowing for flexible and controlled execution of various operations.
+### **Overview**
 
-## Overview
+`ModExecutionAny` is a versatile execution module within the Veive protocol, tailored for the Koinos blockchain. This module's primary function is to execute any specified operation, providing a generic yet powerful tool for developers and users to perform a wide range of actions within the Veive ecosystem. By leveraging `ModExecutionAny`, users can seamlessly interact with smart contracts and other blockchain components without needing to create custom execution logic for each operation.
 
-The `ModExecutionAny` module provides the functionality to execute any operation while allowing the configuration of specific entry points to be skipped. This is useful in scenarios where certain operations should not be executed by this module. The module saves the `account_id` of the account it is installed on, enabling permission checks for configuring the skip list.
+### **Functional Description**
 
-## Installation
+#### **Purpose and Functionality**
 
-To install the package, use npm or yarn:
+The `ModExecutionAny` module serves as a universal executor for operations, supporting a broad array of activities, from simple token transfers to complex smart contract interactions. Its primary features include:
+
+- **Generic Execution Capability**: Unlike specialized execution modules designed for specific tasks, `ModExecutionAny` can execute any operation passed to it. This makes it an ideal choice for scenarios where a wide range of actions need to be supported without implementing custom logic for each.
+
+- **Flexible Operation Handling**: The module accepts operations defined by `contract_id`, `entry_point`, and `args`, executing them as specified. This allows for dynamic interaction with various smart contracts and operations, making it a highly adaptable component within the Veive protocol.
+
+- **Scope Management**: The default scope for `ModExecutionAny` is "any," meaning it is applicable to all operations unless otherwise specified. This broad applicability ensures that `ModExecutionAny` can serve as a fallback executor for any operation that does not match more specific execution modules.
+
+### **Technical Implementation**
+
+#### **Key Components and Methods**
+
+1. **Storage Objects**
+   - `account_id`: This object stores the account ID associated with the module, ensuring that the module can manage or interact with it correctly.
+
+2. **Methods**
+   - **`manifest`**:
+     - **Purpose**: Provides metadata and configuration settings for the module.
+     - **Implementation**: Returns details such as the module’s name, description, type ID, and the default scope, which is "any".
+
+   - **`execute`**:
+     - **Purpose**: Executes a specified operation, which may include smart contract calls or other actions.
+     - **Implementation**: The method logs the execution process, retrieves the necessary arguments for the operation, and then uses `System.call` to execute the operation. This approach allows `ModExecutionAny` to handle a wide range of operations, from token transfers to complex contract interactions.
+
+   - **`on_install`**:
+     - **Purpose**: Initializes the module upon installation.
+     - **Implementation**: Stores the caller’s ID as `account_id`, ensuring that only the correct account can manage or interact with the module.
+
+   - **`get_account_id`** and **`_get_account_id`**:
+     - **Purpose**: Retrieves the stored account ID.
+     - **Implementation**: These methods provide access to the account ID, ensuring that the module can correctly identify and interact with the account.
+
+### **Scopes and Context**
+
+The default scope for `ModExecutionAny` is set to "any," allowing it to execute any operation without specific restrictions. This makes the module particularly useful as a general-purpose executor, providing a fallback mechanism when more specialized execution modules are not applicable.
+
+### **Usage**
+
+#### **Installation**
+
+To install the `ModExecutionAny` module, ensure you have the Veive protocol set up on your Koinos blockchain environment. Install the module using yarn:
 
 ```bash
-npm install @veive/mod-execution-any
+yarn add @veive/mod-execution-any-as
 ```
 
-## Usage
+Deploy the module contract on the Koinos blockchain and install it on the desired account using the `install_module` method provided by the Veive account interface. During installation, the `on_install` method is called to set the necessary configurations and link the module to the account.
 
-### Importing the Package
+#### **Scripts**
 
-First, import the necessary components from the package:
-
-```typescript
-import { ModExecutionAny } from '@veive/mod-execution-any';
-```
-
-## Interface and Methods
-
-The `ModExecutionAny` class provides several methods for managing the execution of operations and configuring skip entry points. Below is a brief overview of the key methods:
-
-### `execute`
-Executes the specified operation. This method is called to perform a specific operation, which may include smart contract calls or other actions defined in the execution module.
-
-### `add_skip_entry_point`
-Adds an entry point to the skip list. This method ensures that the specified entry point is skipped during execution.
-
-### `remove_skip_entry_point`
-Removes an entry point from the skip list. This method ensures that the specified entry point is no longer skipped during execution.
-
-### `get_skip_entry_points`
-Reads the list of skip entry points. This method returns the list of entry points that are configured to be skipped.
-
-### `on_install`
-Overrides the `on_install` method to save the `account_id` of the account on which the module is installed. This allows for permission checks when configuring the skip list.
-
-### `get_account_id`
-Retrieves the associated `account_id`. This method returns the `account_id` of the account on which the module is installed.
-
-## Scripts
-
-### Build
+##### Build
 
 To compile the package, run:
 
@@ -56,15 +66,7 @@ To compile the package, run:
 yarn build
 ```
 
-### Test
-
-To run the tests, run:
-
-```bash
-yarn jest
-```
-
-### Dist
+##### Dist
 
 To create a distribution, run:
 
@@ -72,10 +74,18 @@ To create a distribution, run:
 yarn dist
 ```
 
-## Contributing
+##### Test
+
+To test the package, use:
+
+```bash
+yarn jest
+```
+
+### **Contributing**
 
 Contributions are welcome! Please open an issue or submit a pull request on the [GitHub repository](https://github.com/veiveprotocol).
 
-## License
+### **License**
 
 This project is licensed under the MIT License. See the LICENSE file for details.
